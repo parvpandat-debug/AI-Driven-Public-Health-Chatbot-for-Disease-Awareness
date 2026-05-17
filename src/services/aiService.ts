@@ -75,8 +75,8 @@ export async function getAIResponse(query: string): Promise<string> {
   }
 
   try {
-    const hfResponse = await fetchHuggingFace(query);
-    if (hfResponse) return hfResponse;
+    const xaiResponse = await fetchGrokResponse(query);
+    if (xaiResponse) return xaiResponse;
   } catch {
     // fall through to local knowledge base
   }
@@ -84,48 +84,72 @@ export async function getAIResponse(query: string): Promise<string> {
   return getLocalResponse(query);
 }
 
-async function fetchHuggingFace(query: string): Promise<string | null> {
-  const systemPrompt = `You are Health Shield AI, a public health information assistant. Provide accurate, concise health information using markdown formatting with bullet points. Always remind users to consult a healthcare professional for personal advice. Keep responses under 400 words.`;
+async function fetchGrokResponse(query: string): Promise<string | null> {
+  const model = import.meta.env.VITE_XAI_MODEL || 'gemini-3-flash-preview';
 
-  const prompt = `<|system|>\n${systemPrompt}\n<|user|>\n${query}\n<|assistant|>`;
+  const systemPrompt = [
+    'You are Health Shield AI, a public health assistant focused on practical health measures.',
+    'Answer the user fully and directly in one response. Do not stop mid-explanation.',
+    'Give accurate guidance about symptoms, prevention, self-care, treatment, and when to seek medical help.',
+    'If the user asks about a disease or symptom, explain it in simple terms, then provide a complete response with clear sections or bullet points.',
+    'Use markdown if helpful, but keep the answer complete and not overly brief.',
+    'Always include a brief reminder that the information is general education, not a substitute for professional medical advice.',
+  ].join(' ');
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
 
   try {
+    console.log('[Gemini] Fetching with model:', model);
     const response = await fetch(
-      'https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta',
+      '/api/gemini/v1beta/openai/chat/completions',
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          inputs: prompt,
-          parameters: {
-            max_new_tokens: 400,
-            temperature: 0.7,
-            top_p: 0.95,
-            return_full_text: false,
-          },
+          model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: query },
+          ],
+          temperature: 0.2,
+          max_tokens: 900,
         }),
         signal: controller.signal,
       }
     );
 
     clearTimeout(timeout);
+    console.log('[Gemini] Response status:', response.status, response.ok);
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+        await response.json();
+      console.log('[Gemini] Error response:', errData);
+      return null;
+    }
 
     const data = await response.json();
-    if (Array.isArray(data) && data[0]?.generated_text) {
-      const text = data[0].generated_text.trim();
-      if (text.length > 50) {
-        return text + '\n\n---\n*Always consult a qualified healthcare provider for personal medical advice.*';
-      }
+    const messageContent = data?.choices?.[0]?.message?.content;
+    const text = Array.isArray(messageContent)
+      ? messageContent
+          .map(part => (typeof part === 'string' ? part : part?.text || ''))
+          .join('')
+          .trim()
+      : typeof messageContent === 'string'
+        ? messageContent.trim()
+        : '';
+
+    if (text && text.length > 20) {
+      return `${text}\n\n---\n*This information is for general educational purposes. Please consult a qualified healthcare provider for personalized medical advice.*`;
     }
     return null;
-  } catch {
+  } catch (error) {
     clearTimeout(timeout);
-    return null;
+    return error instanceof Error && error.name === 'AbortError'
+      ? null
+      : null;
   }
 }
 

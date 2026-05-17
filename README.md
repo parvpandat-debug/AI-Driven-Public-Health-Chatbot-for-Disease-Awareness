@@ -24,7 +24,7 @@
 * **Frontend:** React (Vite)
 * **Styling:** Tailwind CSS
 * **Icons:** Lucide React
-* **AI Integration:** Hugging Face Inference API
+* **AI Integration:** xAI Grok via Vite dev-server proxy
 * **Deployment:** Vercel
 
 ---
@@ -49,11 +49,40 @@
     ```bash
     npm install
     ```
-4.  **Start the development server:**
+4.  **Create a `.env` file in the project root:**
+    ```bash
+    XAI_API_KEY=your_xai_api_key_here
+    ```
+5.  **Start the development server:**
     ```bash
     npm run dev
     ```
-5.  Open [http://localhost:5173](http://localhost:5173) in your browser.
+6.  Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+### Check your xAI key with Postman
+
+Run the temporary local server:
+
+```bash
+npm run xai:test-server
+```
+
+Then call this in Postman:
+
+```http
+POST http://localhost:8787/check-key
+Content-Type: application/json
+
+{
+    "message": "Give practical health measures for staying healthy during flu season."
+}
+```
+
+You can also verify the server is up with:
+
+```http
+GET http://localhost:8787/health
+```
 
 ---
 
