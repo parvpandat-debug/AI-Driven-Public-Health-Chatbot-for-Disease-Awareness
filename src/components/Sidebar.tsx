@@ -1,4 +1,5 @@
-import { Heart, Brain, Thermometer, Activity, Leaf, Moon, Wind, Droplets } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Heart, Brain, Thermometer, Activity, Leaf, Moon, Wind, Droplets, X, Search } from 'lucide-react';
 import { HealthTopic } from '../types';
 
 const healthTopics: HealthTopic[] = [
@@ -74,55 +75,100 @@ const iconMap: Record<string, React.ReactNode> = {
 interface Props {
   onTopicSelect: (prompt: string, topicId: string) => void;
   activeTopic: string | null;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export default function Sidebar({ onTopicSelect, activeTopic }: Props) {
+export default function Sidebar({ onTopicSelect, activeTopic, isOpen = false, onClose }: Props) {
+  const [query, setQuery] = useState('');
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return healthTopics;
+    return healthTopics.filter(t => t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q));
+  }, [query]);
+
   return (
-    <aside className="w-72 bg-white border-r border-slate-100 flex flex-col h-full overflow-hidden">
-      <div className="px-4 pt-5 pb-3 border-b border-slate-100">
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Common Health Topics</h2>
-        <p className="text-xs text-slate-400 mt-1">Click a topic to start a conversation</p>
-      </div>
+    <>
+      {/* Overlay for mobile when sidebar is open */}
+      {isOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={onClose} />}
 
-      <div className="flex-1 overflow-y-auto py-2 px-2">
-        {healthTopics.map((topic) => (
+      <aside
+        className={
+          `bg-white border-r border-slate-100 flex flex-col h-full overflow-hidden w-72 md:w-72 ` +
+          `md:static md:translate-x-0 ` +
+          `${isOpen ? 'fixed inset-y-0 left-0 z-40 transform translate-x-0' : 'fixed inset-y-0 left-0 z-40 transform -translate-x-full md:transform-none'}` +
+          ' transition-transform duration-200'
+        }
+      >
+        <div className="px-4 pt-5 pb-3 border-b border-slate-100 relative">
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Common Health Topics</h2>
+          <p className="text-xs text-slate-400 mt-1">Click a topic to start a conversation</p>
           <button
-            key={topic.id}
-            onClick={() => onTopicSelect(topic.prompt, topic.id)}
-            className={`w-full text-left px-3 py-2.5 rounded-xl mb-1 transition-all duration-150 group flex items-start gap-3 ${
-              activeTopic === topic.id
-                ? 'bg-teal-50 border border-teal-200'
-                : 'hover:bg-slate-50 border border-transparent'
-            }`}
+            onClick={onClose}
+            className="md:hidden absolute top-3 right-3 p-1.5 rounded-md text-slate-500 hover:bg-slate-100"
+            aria-label="Close sidebar"
           >
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-              activeTopic === topic.id
-                ? 'bg-teal-600 text-white'
-                : 'bg-slate-100 text-slate-500 group-hover:bg-teal-100 group-hover:text-teal-600'
-            }`}>
-              {iconMap[topic.icon]}
-            </div>
-            <div className="min-w-0">
-              <p className={`text-sm font-medium leading-tight ${activeTopic === topic.id ? 'text-teal-800' : 'text-slate-700'}`}>
-                {topic.title}
-              </p>
-              <p className="text-xs text-slate-400 mt-0.5 leading-tight">{topic.description}</p>
-            </div>
+            <X size={16} />
           </button>
-        ))}
-      </div>
 
-      <div className="p-4 border-t border-slate-100 bg-slate-50">
-        <div className="bg-teal-600 rounded-xl p-3 text-white">
-          <p className="text-xs font-semibold mb-1">Emergency?</p>
-          <p className="text-xs text-teal-100 leading-relaxed">
-            For medical emergencies, call <span className="font-bold text-white">911</span> immediately.
-          </p>
-          <p className="text-xs text-teal-100 mt-1">
-            Crisis Lifeline: <span className="font-bold text-white">988</span>
-          </p>
+          <div className="mt-3">
+            <div className="relative">
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search topics..."
+                className="w-full pl-10 pr-3 py-2 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-200"
+                aria-label="Search topics"
+              />
+              <Search size={16} className="absolute left-3 top-2.5 text-slate-400" />
+            </div>
+          </div>
         </div>
-      </div>
-    </aside>
+
+        <div className="flex-1 overflow-y-auto py-2 px-2">
+          {filtered.map((topic) => (
+            <button
+              key={topic.id}
+              onClick={() => {
+                onTopicSelect(topic.prompt, topic.id);
+                onClose?.();
+              }}
+              className={`w-full text-left px-3 py-2.5 rounded-xl mb-1 transition-all duration-150 group flex items-start gap-3 ${
+                activeTopic === topic.id
+                  ? 'bg-teal-50 border border-teal-200'
+                  : 'hover:bg-slate-50 border border-transparent'
+              }`}
+            >
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                activeTopic === topic.id
+                  ? 'bg-teal-600 text-white'
+                  : 'bg-slate-100 text-slate-500 group-hover:bg-teal-100 group-hover:text-teal-600'
+              }`}>
+                {iconMap[topic.icon]}
+              </div>
+              <div className="min-w-0">
+                <p className={`text-sm font-medium leading-tight ${activeTopic === topic.id ? 'text-teal-800' : 'text-slate-700'}`}>
+                  {topic.title}
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5 leading-tight">{topic.description}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <div className="p-4 border-t border-slate-100 bg-slate-50">
+          <div className="bg-teal-600 rounded-xl p-3 text-white">
+            <p className="text-xs font-semibold mb-1">Emergency?</p>
+            <p className="text-xs text-teal-100 leading-relaxed">
+              For medical emergencies, call <span className="font-bold text-white">911</span> immediately.
+            </p>
+            <p className="text-xs text-teal-100 mt-1">
+              Crisis Lifeline: <span className="font-bold text-white">988</span>
+            </p>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }
