@@ -111,7 +111,9 @@ We welcome contributors of all skill levels! To contribute:
 
 ## ⚖️ Disclaimer
 
-*This application is for educational and awareness purposes only. It does not provide professional medical diagnosis or treatment. Always consult a qualified healthcare provider for medical concerns.*
+
+> [!WARNING]  
+> **MEDICAL DISCLAIMER:** This AI-Driven Public Health Chatbot is designed strictly for educational purposes, public literacy, and preventive health awareness. It **does not** provide official medical diagnoses, clinical assessments, or treatment plans. The system is not a replacement for professional medical advice, consultation, or emergency healthcare services. Always encourage users to consult a qualified medical professional for health concerns.
 
 ## 📄 License
 
