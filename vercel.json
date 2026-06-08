@@ -1,8 +1,12 @@
 {
   "rewrites": [
     {
+      "source": "/api/gemini/v1beta/openai/chat/completions",
+      "destination": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+    },
+    {
       "source": "/api/gemini/:path*",
-      "destination": "https://generativelanguage.googleapis.com/:path*"
+      "destination": "https://generativelanguage.googleapis.com/v1beta/openai/:path*"
     }
   ]
 }
