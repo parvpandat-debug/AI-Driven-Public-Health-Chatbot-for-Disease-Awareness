@@ -85,7 +85,7 @@ export async function getAIResponse(query: string): Promise<string> {
 }
 
 async function fetchGrokResponse(query: string): Promise<string | null> {
-  const model = import.meta.env.VITE_XAI_MODEL || 'gemini-3-flash-preview';
+  const model = import.meta.env.VITE_XAI_MODEL || 'gemini-2.5-flash';
 
   const systemPrompt = [
     'You are Health Shield AI, a public health assistant focused on practical health measures.',
@@ -99,33 +99,38 @@ async function fetchGrokResponse(query: string): Promise<string | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
 
+  // Check if running locally or deployed on Vercel production
+  const isLocal = import.meta.env.DEV;
+
+  // Use the local proxy if dev environment; connect straight to Google endpoint if production
+  const API_URL = isLocal
+    ? '/api/gemini/v1beta/openai/chat/completions'
+    : `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions?key=${import.meta.env.VITE_XAI_API_KEY}`;
+
   try {
     console.log('[Gemini] Fetching with model:', model);
-    const response = await fetch(
-      '/api/gemini/v1beta/openai/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: query },
-          ],
-          temperature: 0.2,
-          max_tokens: 900,
-        }),
-        signal: controller.signal,
-      }
-    );
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: query },
+        ],
+        temperature: 0.2,
+        max_tokens: 900,
+      }),
+      signal: controller.signal,
+    });
 
     clearTimeout(timeout);
     console.log('[Gemini] Response status:', response.status, response.ok);
 
     if (!response.ok) {
-        await response.json();
+      const errData = await response.json().catch(() => ({}));
       console.log('[Gemini] Error response:', errData);
       return null;
     }
@@ -147,9 +152,7 @@ async function fetchGrokResponse(query: string): Promise<string | null> {
     return null;
   } catch (error) {
     clearTimeout(timeout);
-    return error instanceof Error && error.name === 'AbortError'
-      ? null
-      : null;
+    return null;
   }
 }
 
