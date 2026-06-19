@@ -1,12 +1,5 @@
 {
   "rewrites": [
-    {
-      "source": "/api/gemini/v1beta/openai/chat/completions",
-      "destination": "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions?key=:VITE_XAI_API_KEY"
-    },
-    {
-      "source": "/api/gemini/:path*",
-      "destination": "https://generativelanguage.googleapis.com/v1beta/openai/:path*?key=:VITE_XAI_API_KEY"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
