@@ -103,9 +103,10 @@ async function fetchGrokResponse(query: string): Promise<string | null> {
   const isLocal = import.meta.env.DEV;
 
   // Use the local proxy if dev environment; connect straight to Google endpoint if production
+  // Note: We removed the inline URL `?key=` query param here since the OpenAI compatibility layer expects the Authorization header instead
   const API_URL = isLocal
     ? '/api/gemini/v1beta/openai/chat/completions'
-    : `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions?key=${import.meta.env.VITE_XAI_API_KEY}`;
+    : 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 
   try {
     console.log('[Gemini] Fetching with model:', model);
@@ -113,6 +114,8 @@ async function fetchGrokResponse(query: string): Promise<string | null> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        // Pass the API key using standard OpenAI Bearer format for both environments
+        'Authorization': `Bearer ${import.meta.env.VITE_XAI_API_KEY}`
       },
       body: JSON.stringify({
         model,
