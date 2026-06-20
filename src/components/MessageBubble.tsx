@@ -16,7 +16,7 @@ export default function MessageBubble({ message }: Props) {
   if (isUser) {
     return (
       <div className="flex items-start gap-3 px-4 py-2 justify-end">
-        <div className="max-w-[78%] flex flex-col items-end gap-1">
+        <div className="max-w-[85%] md:max-w-[78%] flex flex-col items-end gap-1">
           <div className="bg-teal-600 text-white px-4 py-2.5 rounded-2xl rounded-tr-sm shadow-sm">
             <p className="text-sm leading-relaxed">{message.content}</p>
           </div>
@@ -29,13 +29,30 @@ export default function MessageBubble({ message }: Props) {
     );
   }
 
+  if (!message.content.trim()) {
+    return (
+      <div className="flex items-start gap-3 px-4 py-2">
+        <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+          <ShieldPlus size={16} className="text-white" />
+        </div>
+        <div className="max-w-[85%] md:max-w-[82%] flex flex-col gap-1">
+          <div className="bg-white border border-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm animate-pulse">
+            <div className="h-3 rounded-full bg-slate-200 w-24 mb-2" />
+            <div className="h-3 rounded-full bg-slate-200 w-32 mb-2" />
+            <div className="h-3 rounded-full bg-slate-200 w-16" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-start gap-3 px-4 py-2">
+    <div className="flex items-start gap-3 px-4 py-2 transition-all duration-200">
       <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center shrink-0 shadow-sm mt-0.5">
         <ShieldPlus size={16} className="text-white" />
       </div>
-      <div className="max-w-[82%] flex flex-col gap-1">
-        <div className="bg-white border border-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+      <div className="max-w-[85%] md:max-w-[82%] flex flex-col gap-1">
+        <div className="bg-white border border-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm transition-all duration-200">
           <MarkdownRenderer content={message.content} />
         </div>
         <span className="text-xs text-slate-400 ml-1">{formatTime(message.timestamp)}</span>
